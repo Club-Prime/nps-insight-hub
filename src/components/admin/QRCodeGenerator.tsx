@@ -17,8 +17,9 @@ export const QRCodeGenerator = ({ questionnaireId, questionnaireTitle, slug }: Q
   const [copied, setCopied] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
   
-  // URL da pesquisa - usando slug se disponível, senão ID
-  const surveyUrl = `${window.location.origin}/survey/${slug || questionnaireId}`;
+  // URL da pesquisa - usando variável de ambiente ou fallback para origin atual
+  const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+  const surveyUrl = `${baseUrl}/survey/${slug || questionnaireId}`;
 
   const handleCopyUrl = async () => {
     try {
