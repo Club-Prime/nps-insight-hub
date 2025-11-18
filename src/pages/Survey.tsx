@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { NPSScale } from "@/components/survey/NPSScale";
 import { QuestionRenderer } from "@/components/survey/QuestionRenderer";
 import { toast } from "sonner";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, AlertCircle } from "lucide-react";
 import logoBlack from "@/assets/logo-black.png";
+import { validateCPF, formatCPF } from "@/lib/cpf-validator";
 
 export default function Survey() {
   const navigate = useNavigate();
@@ -22,10 +23,11 @@ export default function Survey() {
   const [formData, setFormData] = useState({
     cpf: "",
     fullName: "",
-    product: "",
-    service: "",
+    email: "",
+    phone: "",
   });
   
+  const [cpfError, setCpfError] = useState<string>("");
   const [npsScore, setNpsScore] = useState<number | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
@@ -91,25 +93,33 @@ export default function Survey() {
     }
   };
 
-  const formatCPF = (value: string) => {
-    const numbers = value.replace(/\D/g, "");
-    if (numbers.length <= 11) {
-      return numbers
-        .replace(/(\d{3})(\d)/, "$1.$2")
-        .replace(/(\d{3})(\d)/, "$1.$2")
-        .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    }
-    return value;
-  };
-
   const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCPF(e.target.value);
     setFormData({ ...formData, cpf: formatted });
+    
+    // Validar CPF quando tiver 11 dígitos
+    const cleanCPF = formatted.replace(/\D/g, '');
+    if (cleanCPF.length === 11) {
+      if (validateCPF(formatted)) {
+        setCpfError("");
+      } else {
+        setCpfError("CPF inválido");
+      }
+    } else {
+      setCpfError("");
+    }
   };
 
   const validateForm = () => {
-    if (!formData.cpf || !formData.fullName || !formData.product || !formData.service) {
+    if (!formData.cpf || !formData.fullName) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
+      return false;
+    }
+
+    // Validar CPF
+    if (!validateCPF(formData.cpf)) {
+      toast.error("Por favor, insira um CPF válido");
+      setCpfError("CPF inválido");
       return false;
     }
 
@@ -143,10 +153,10 @@ export default function Survey() {
           questionnaire_id: questionnaire.id,
           cpf: formData.cpf.replace(/\D/g, ""),
           full_name: formData.fullName,
-          product: formData.product,
-          service: formData.service,
+          email: formData.email || null,
+          phone: formData.phone || null,
           nps_score: npsScore,
-        })
+        } as any)
         .select()
         .single();
 
@@ -244,7 +254,14 @@ export default function Survey() {
                   placeholder="000.000.000-00"
                   maxLength={14}
                   required
+                  className={cpfError ? "border-destructive" : ""}
                 />
+                {cpfError && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {cpfError}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -259,24 +276,23 @@ export default function Survey() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="product">Produto Adquirido *</Label>
+                <Label htmlFor="email">E-mail</Label>
                 <Input
-                  id="product"
-                  value={formData.product}
-                  onChange={(e) => setFormData({ ...formData, product: e.target.value })}
-                  placeholder="Nome do produto"
-                  required
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="seu@email.com"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="service">Serviço Utilizado *</Label>
+                <Label htmlFor="phone">Telefone</Label>
                 <Input
-                  id="service"
-                  value={formData.service}
-                  onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                  placeholder="Nome do serviço"
-                  required
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="(00) 00000-0000"
                 />
               </div>
             </div>

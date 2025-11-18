@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,10 +36,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface Question {
   id?: string;
+  section_title?: string;
   question_text: string;
-  question_type: "nps" | "scale" | "yes_no" | "text_short" | "text_long" | "multiple_choice";
+  question_type: "nps" | "scale" | "yes_no" | "text_short" | "text_long" | "multiple_choice" | "checkbox";
   is_required: boolean;
   options?: { choices: string[] };
+  placeholder?: string;
   order_index: number;
 }
 
@@ -52,20 +54,61 @@ interface QuestionnaireEditorProps {
 
 export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSuccess }: QuestionnaireEditorProps) => {
   const [loading, setLoading] = useState(false);
-  const [title, setTitle] = useState(questionnaire?.title || "");
-  const [description, setDescription] = useState(questionnaire?.description || "");
-  const [slug, setSlug] = useState(questionnaire?.slug || "");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [slug, setSlug] = useState("");
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
-  const [questions, setQuestions] = useState<Question[]>(
-    questionnaire?.questions || [
-      {
-        question_text: "Em uma escala de 0 a 10, qual a probabilidade de você recomendar nossos produtos/serviços?",
-        question_type: "nps",
-        is_required: true,
-        order_index: 0,
-      },
-    ]
-  );
+  const [questions, setQuestions] = useState<Question[]>([
+    {
+      question_text: "Em uma escala de 0 a 10, qual a probabilidade de você recomendar nossos produtos/serviços?",
+      question_type: "nps",
+      is_required: true,
+      order_index: 0,
+    },
+  ]);
+
+  // Atualizar estados quando o questionário mudar
+  useEffect(() => {
+    if (questionnaire) {
+      setTitle(questionnaire.title || "");
+      setDescription(questionnaire.description || "");
+      setSlug(questionnaire.slug || "");
+      
+      // Transformar options do formato do banco (array) para o formato do editor (objeto com choices)
+      const transformedQuestions = (questionnaire.questions || []).map((q: any) => ({
+        ...q,
+        options: q.options 
+          ? (Array.isArray(q.options) ? { choices: q.options } : q.options)
+          : undefined,
+      }));
+      
+      setQuestions(
+        transformedQuestions.length > 0
+          ? transformedQuestions
+          : [
+              {
+                question_text: "Em uma escala de 0 a 10, qual a probabilidade de você recomendar nossos produtos/serviços?",
+                question_type: "nps",
+                is_required: true,
+                order_index: 0,
+              },
+            ]
+      );
+    } else {
+      // Resetar para novo questionário
+      setTitle("");
+      setDescription("");
+      setSlug("");
+      setQuestions([
+        {
+          question_text: "Em uma escala de 0 a 10, qual a probabilidade de você recomendar nossos produtos/serviços?",
+          question_type: "nps",
+          is_required: true,
+          order_index: 0,
+        },
+      ]);
+    }
+  }, [questionnaire, open]);
 
   const generateSlug = (text: string) => {
     return text
@@ -202,10 +245,12 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
 
       const questionsToInsert = questions.map((q) => ({
         questionnaire_id: questionnaireId,
+        section_title: q.section_title || null,
         question_text: q.question_text,
-        question_type: q.question_type,
+        question_type: q.question_type as any, // Type will be updated when Supabase types are regenerated
         is_required: q.is_required,
         options: q.options || null,
+        placeholder: q.placeholder || null,
         order_index: q.order_index,
       }));
 
@@ -356,7 +401,8 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
                               <SelectItem value="yes_no">Sim/Não</SelectItem>
                               <SelectItem value="text_short">Texto Curto</SelectItem>
                               <SelectItem value="text_long">Texto Longo</SelectItem>
-                              <SelectItem value="multiple_choice">Múltipla Escolha</SelectItem>
+                              <SelectItem value="multiple_choice">Múltipla Escolha (Radio)</SelectItem>
+                              <SelectItem value="checkbox">Múltipla Seleção (Checkbox)</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -378,7 +424,7 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
                         </div>
                       </div>
 
-                      {question.question_type === "multiple_choice" && (
+                      {(question.question_type === "multiple_choice" || question.question_type === "checkbox") && (
                         <div className="space-y-2 pl-4 border-l-2 border-border">
                           <div className="flex items-center justify-between">
                             <Label className="text-sm">Opções de Resposta</Label>

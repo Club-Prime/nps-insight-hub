@@ -2,14 +2,17 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
 interface Question {
   id: string;
+  section_title?: string;
   question_text: string;
   question_type: string;
   is_required: boolean;
   options?: any;
+  placeholder?: string;
 }
 
 interface QuestionRendererProps {
@@ -19,6 +22,25 @@ interface QuestionRendererProps {
 }
 
 export const QuestionRenderer = ({ question, value, onChange }: QuestionRendererProps) => {
+  // Transform options to support both array and object formats
+  const getChoices = (): string[] => {
+    if (!question.options) return [];
+    if (Array.isArray(question.options)) return question.options;
+    if (question.options.choices) return question.options.choices;
+    return [];
+  };
+
+  const choices = getChoices();
+
+  // Debug log
+  console.log('QuestionRenderer Debug:', {
+    questionText: question.question_text,
+    questionType: question.question_type,
+    options: question.options,
+    choices: choices,
+    choicesLength: choices.length
+  });
+
   const renderInput = () => {
     switch (question.question_type) {
       case "scale":
@@ -45,16 +67,34 @@ export const QuestionRenderer = ({ question, value, onChange }: QuestionRenderer
 
       case "yes_no":
         return (
-          <RadioGroup value={value} onValueChange={onChange} className="flex gap-4">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Sim" id={`${question.id}-yes`} />
-              <Label htmlFor={`${question.id}-yes`} className="cursor-pointer">Sim</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Não" id={`${question.id}-no`} />
-              <Label htmlFor={`${question.id}-no`} className="cursor-pointer">Não</Label>
-            </div>
-          </RadioGroup>
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() => onChange("Sim")}
+              className={cn(
+                "px-8 py-3 rounded-lg font-medium text-base transition-all duration-200",
+                "border-2 flex items-center justify-center min-w-[120px]",
+                value === "Sim"
+                  ? "bg-primary text-primary-foreground border-transparent shadow-lg"
+                  : "bg-secondary text-foreground border-border hover:border-primary hover:scale-105"
+              )}
+            >
+              Sim
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange("Não")}
+              className={cn(
+                "px-8 py-3 rounded-lg font-medium text-base transition-all duration-200",
+                "border-2 flex items-center justify-center min-w-[120px]",
+                value === "Não"
+                  ? "bg-primary text-primary-foreground border-transparent shadow-lg"
+                  : "bg-secondary text-foreground border-border hover:border-primary hover:scale-105"
+              )}
+            >
+              Não
+            </button>
+          </div>
         );
 
       case "text_short":
@@ -62,7 +102,7 @@ export const QuestionRenderer = ({ question, value, onChange }: QuestionRenderer
           <Input
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="Sua resposta"
+            placeholder={question.placeholder || "Sua resposta"}
             className="max-w-md"
           />
         );
@@ -72,16 +112,28 @@ export const QuestionRenderer = ({ question, value, onChange }: QuestionRenderer
           <Textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="Compartilhe seus comentários..."
+            placeholder={question.placeholder || "Compartilhe seus comentários..."}
             className="min-h-[100px]"
+            rows={4}
           />
         );
 
       case "multiple_choice":
-        if (!question.options?.choices) return null;
+        if (choices.length === 0) {
+          return (
+            <div className="p-4 bg-destructive/10 border border-destructive rounded-lg">
+              <p className="text-sm text-destructive font-medium">
+                ⚠️ Erro: Opções de resposta não configuradas para esta pergunta.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Options: {JSON.stringify(question.options)}
+              </p>
+            </div>
+          );
+        }
         return (
           <RadioGroup value={value} onValueChange={onChange} className="space-y-2">
-            {question.options.choices.map((choice: string, index: number) => (
+            {choices.map((choice: string, index: number) => (
               <div key={index} className="flex items-center space-x-2">
                 <RadioGroupItem value={choice} id={`${question.id}-${index}`} />
                 <Label htmlFor={`${question.id}-${index}`} className="cursor-pointer">
@@ -92,6 +144,56 @@ export const QuestionRenderer = ({ question, value, onChange }: QuestionRenderer
           </RadioGroup>
         );
 
+      case "checkbox":
+        if (choices.length === 0) {
+          return (
+            <div className="p-4 bg-destructive/10 border border-destructive rounded-lg">
+              <p className="text-sm text-destructive font-medium">
+                ⚠️ Erro: Opções de resposta não configuradas para esta pergunta.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Options: {JSON.stringify(question.options)}
+              </p>
+            </div>
+          );
+        }
+        
+        const selectedValues = value ? value.split(',') : [];
+        
+        const handleCheckboxChange = (choice: string, checked: boolean) => {
+          let newValues = [...selectedValues];
+          
+          if (checked) {
+            if (!newValues.includes(choice)) {
+              newValues.push(choice);
+            }
+          } else {
+            newValues = newValues.filter(v => v !== choice);
+          }
+          
+          onChange(newValues.join(','));
+        };
+
+        return (
+          <div className="space-y-3">
+            {choices.map((choice: string, index: number) => (
+              <div key={index} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`${question.id}-${index}`}
+                  checked={selectedValues.includes(choice)}
+                  onCheckedChange={(checked) => handleCheckboxChange(choice, checked as boolean)}
+                />
+                <Label 
+                  htmlFor={`${question.id}-${index}`} 
+                  className="cursor-pointer font-normal"
+                >
+                  {choice}
+                </Label>
+              </div>
+            ))}
+          </div>
+        );
+
       default:
         return null;
     }
@@ -99,7 +201,12 @@ export const QuestionRenderer = ({ question, value, onChange }: QuestionRenderer
 
   return (
     <div className="space-y-4 p-6 bg-card rounded-lg border border-border">
-      <Label className="text-base font-medium">
+      {question.section_title && (
+        <h3 className="text-lg font-semibold text-primary border-b pb-2 mb-4">
+          {question.section_title}
+        </h3>
+      )}
+      <Label className="text-base font-medium block">
         {question.question_text}
         {question.is_required && <span className="text-destructive ml-1">*</span>}
       </Label>
