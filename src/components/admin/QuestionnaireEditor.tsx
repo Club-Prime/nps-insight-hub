@@ -18,8 +18,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { X, Plus, GripVertical } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { X, Plus, GripVertical, Trash2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -44,6 +55,7 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
   const [title, setTitle] = useState(questionnaire?.title || "");
   const [description, setDescription] = useState(questionnaire?.description || "");
   const [slug, setSlug] = useState(questionnaire?.slug || "");
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const [questions, setQuestions] = useState<Question[]>(
     questionnaire?.questions || [
       {
@@ -88,9 +100,17 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
       toast.error("Não é possível remover a pergunta NPS");
       return;
     }
-    const updated = questions.filter((_, i) => i !== index);
+    setDeleteIndex(index);
+  };
+
+  const confirmRemoveQuestion = () => {
+    if (deleteIndex === null) return;
+    
+    const updated = questions.filter((_, i) => i !== deleteIndex);
     updated.forEach((q, i) => (q.order_index = i));
     setQuestions(updated);
+    setDeleteIndex(null);
+    toast.success("Pergunta removida com sucesso");
   };
 
   const updateQuestion = (index: number, field: keyof Question, value: any) => {
@@ -151,7 +171,6 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
       let questionnaireId = questionnaire?.id;
 
       if (questionnaire) {
-        // Update existing
         const { error: updateError } = await supabase
           .from("questionnaires")
           .update({
@@ -164,10 +183,8 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
 
         if (updateError) throw updateError;
 
-        // Delete old questions
         await supabase.from("questions").delete().eq("questionnaire_id", questionnaire.id);
       } else {
-        // Create new
         const { data: newQuestionnaire, error: createError } = await supabase
           .from("questionnaires")
           .insert({
@@ -183,7 +200,6 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
         questionnaireId = newQuestionnaire.id;
       }
 
-      // Insert questions
       const questionsToInsert = questions.map((q) => ({
         questionnaire_id: questionnaireId,
         question_text: q.question_text,
@@ -213,178 +229,224 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{questionnaire ? "Editar Pesquisa" : "Nova Pesquisa"}</DialogTitle>
-          <DialogDescription>
-            Configure o título, descrição e perguntas da pesquisa. A pergunta NPS é obrigatória.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{questionnaire ? "Editar Pesquisa" : "Nova Pesquisa"}</DialogTitle>
+            <DialogDescription>
+              Configure o título, descrição e perguntas da pesquisa. A pergunta NPS é obrigatória.
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Título da Pesquisa *</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                placeholder="Ex: Pesquisa de Satisfação 2025"
-              />
-            </div>
+          <div className="space-y-6 py-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Título da Pesquisa *</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  placeholder="Ex: Pesquisa de Satisfação 2025"
+                  className={!title.trim() ? "border-destructive" : ""}
+                />
+                {!title.trim() && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Este campo é obrigatório
+                  </p>
+                )}
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="slug">Slug (URL) *</Label>
-              <Input
-                id="slug"
-                value={slug}
-                onChange={(e) => setSlug(generateSlug(e.target.value))}
-                placeholder="pesquisa-satisfacao-2025"
-              />
-              <p className="text-xs text-muted-foreground">
-                URL: {window.location.origin}/survey/{slug || "..."}
-              </p>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="slug">Slug (URL) *</Label>
+                <Input
+                  id="slug"
+                  value={slug}
+                  onChange={(e) => setSlug(generateSlug(e.target.value))}
+                  placeholder="pesquisa-satisfacao-2025"
+                  className={!slug.trim() ? "border-destructive" : ""}
+                />
+                <p className="text-xs text-muted-foreground">
+                  🔗 URL: {window.location.origin}/survey/{slug || "..."}
+                </p>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Descrição</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descreva o objetivo desta pesquisa"
-                rows={3}
-              />
-            </div>
-          </div>
-
-          {/* Questions */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-lg font-semibold">Perguntas</Label>
-              <Button onClick={addQuestion} size="sm" variant="outline">
-                <Plus className="w-4 h-4 mr-2" />
-                Adicionar Pergunta
-              </Button>
+              <div className="space-y-2">
+                <Label htmlFor="description">Descrição</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Descreva o objetivo desta pesquisa"
+                  rows={3}
+                />
+              </div>
             </div>
 
             <div className="space-y-4">
-              {questions.map((question, index) => (
-                <Card key={index}>
-                  <CardContent className="pt-6 space-y-4">
-                    <div className="flex items-start gap-3">
-                      <GripVertical className="w-5 h-5 text-muted-foreground mt-2 cursor-move" />
-                      <div className="flex-1 space-y-4">
-                        <div className="flex items-start gap-2">
-                          <Input
-                            value={question.question_text}
-                            onChange={(e) => updateQuestion(index, "question_text", e.target.value)}
-                            placeholder="Digite a pergunta"
-                            disabled={question.question_type === "nps"}
-                          />
-                          {question.question_type !== "nps" && (
-                            <Button
-                              onClick={() => removeQuestion(index)}
-                              size="icon"
-                              variant="ghost"
-                              className="shrink-0"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
+              <div className="flex items-center justify-between">
+                <Label className="text-lg font-semibold">Perguntas ({questions.length})</Label>
+                <Button onClick={addQuestion} size="sm" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar Pergunta
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {questions.map((question, index) => (
+                  <Card key={index} className="relative">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center gap-3">
+                        <GripVertical className="w-5 h-5 text-muted-foreground cursor-move shrink-0" />
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                          Pergunta {index + 1}
+                          {question.question_type === "nps" && (
+                            <Badge variant="secondary" className="ml-2">NPS - Obrigatória</Badge>
                           )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label className="text-sm">Tipo de Pergunta</Label>
-                            <Select
-                              value={question.question_type}
-                              onValueChange={(value) => updateQuestion(index, "question_type", value)}
-                              disabled={question.question_type === "nps"}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="nps">NPS (0-10)</SelectItem>
-                                <SelectItem value="scale">Escala (1-5)</SelectItem>
-                                <SelectItem value="yes_no">Sim/Não</SelectItem>
-                                <SelectItem value="text_short">Texto Curto</SelectItem>
-                                <SelectItem value="text_long">Texto Longo</SelectItem>
-                                <SelectItem value="multiple_choice">Múltipla Escolha</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label className="text-sm">Obrigatória?</Label>
-                            <Select
-                              value={question.is_required ? "yes" : "no"}
-                              onValueChange={(value) => updateQuestion(index, "is_required", value === "yes")}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="yes">Sim</SelectItem>
-                                <SelectItem value="no">Não</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-
-                        {/* Multiple Choice Options */}
-                        {question.question_type === "multiple_choice" && (
-                          <div className="space-y-2 pl-4 border-l-2 border-border">
-                            <div className="flex items-center justify-between">
-                              <Label className="text-sm">Opções de Resposta</Label>
-                              <Button onClick={() => addChoice(index)} size="sm" variant="ghost">
-                                <Plus className="w-3 h-3 mr-1" />
-                                Opção
-                              </Button>
-                            </div>
-                            <div className="space-y-2">
-                              {question.options?.choices.map((choice, choiceIndex) => (
-                                <div key={choiceIndex} className="flex items-center gap-2">
-                                  <Input
-                                    value={choice}
-                                    onChange={(e) => updateChoice(index, choiceIndex, e.target.value)}
-                                    placeholder={`Opção ${choiceIndex + 1}`}
-                                    className="flex-1"
-                                  />
-                                  <Button
-                                    onClick={() => removeChoice(index, choiceIndex)}
-                                    size="icon"
-                                    variant="ghost"
-                                    className="shrink-0 h-8 w-8"
-                                  >
-                                    <X className="w-3 h-3" />
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                          {question.is_required && question.question_type !== "nps" && (
+                            <Badge variant="outline">Obrigatória</Badge>
+                          )}
+                        </CardTitle>
+                        {question.question_type !== "nps" && (
+                          <Button
+                            onClick={() => removeQuestion(index)}
+                            size="icon"
+                            variant="ghost"
+                            className="ml-auto shrink-0 hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         )}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Texto da Pergunta</Label>
+                        <Textarea
+                          value={question.question_text}
+                          onChange={(e) => updateQuestion(index, "question_text", e.target.value)}
+                          placeholder="Digite a pergunta"
+                          disabled={question.question_type === "nps"}
+                          rows={2}
+                          className={!question.question_text.trim() ? "border-destructive" : ""}
+                        />
+                        {!question.question_text.trim() && (
+                          <p className="text-xs text-destructive flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            Este campo é obrigatório
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm">Tipo de Pergunta</Label>
+                          <Select
+                            value={question.question_type}
+                            onValueChange={(value) => updateQuestion(index, "question_type", value)}
+                            disabled={question.question_type === "nps"}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="nps">NPS (0-10)</SelectItem>
+                              <SelectItem value="scale">Escala (1-5)</SelectItem>
+                              <SelectItem value="yes_no">Sim/Não</SelectItem>
+                              <SelectItem value="text_short">Texto Curto</SelectItem>
+                              <SelectItem value="text_long">Texto Longo</SelectItem>
+                              <SelectItem value="multiple_choice">Múltipla Escolha</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-sm">Obrigatória?</Label>
+                          <Select
+                            value={question.is_required ? "yes" : "no"}
+                            onValueChange={(value) => updateQuestion(index, "is_required", value === "yes")}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="yes">Sim</SelectItem>
+                              <SelectItem value="no">Não</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {question.question_type === "multiple_choice" && (
+                        <div className="space-y-2 pl-4 border-l-2 border-border">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm">Opções de Resposta</Label>
+                            <Button onClick={() => addChoice(index)} size="sm" variant="ghost">
+                              <Plus className="w-3 h-3 mr-1" />
+                              Opção
+                            </Button>
+                          </div>
+                          <div className="space-y-2">
+                            {question.options?.choices.map((choice, choiceIndex) => (
+                              <div key={choiceIndex} className="flex items-center gap-2">
+                                <Input
+                                  value={choice}
+                                  onChange={(e) => updateChoice(index, choiceIndex, e.target.value)}
+                                  placeholder={`Opção ${choiceIndex + 1}`}
+                                  className="flex-1"
+                                />
+                                <Button
+                                  onClick={() => removeChoice(index, choiceIndex)}
+                                  size="icon"
+                                  variant="ghost"
+                                  className="shrink-0 h-8 w-8"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline" disabled={loading}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? "Salvando..." : questionnaire ? "Atualizar" : "Criar Pesquisa"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button onClick={() => onOpenChange(false)} variant="outline" disabled={loading}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? "Salvando..." : questionnaire ? "Atualizar" : "Criar Pesquisa"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteIndex !== null} onOpenChange={() => setDeleteIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover a pergunta {deleteIndex !== null ? deleteIndex + 1 : ""}?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemoveQuestion}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir Pergunta
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
