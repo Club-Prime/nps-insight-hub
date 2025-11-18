@@ -1,0 +1,42 @@
+name: go-health-nps
+region: nyc
+
+static_sites:
+  - name: web
+    github:
+      repo: Luan-DataSpot/nps-insight-hub
+      branch: main
+      deploy_on_push: true
+    
+    build_command: npm install && npm run build
+    output_dir: dist
+    environment_slug: node-js
+    
+    envs:
+      - key: VITE_SUPABASE_URL
+        value: https://lovncddlhqjbawiuigyx.supabase.co
+        scope: BUILD_TIME
+      
+      - key: VITE_SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxvdm5jZGRsaHFqYmF3aXVpZ3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0NjQzMjksImV4cCI6MjA3OTA0MDMyOX0.7sYDSCwEVp_qWAUykUPaHacxm8VL3OL2qCAg0Fw8D5w
+        scope: BUILD_TIME
+    
+    routes:
+      - path: /
+    
+    # SPA fallback - todas as rotas vão para index.html
+    catchall_document: index.html
+    
+    # Headers de segurança
+    cors:
+      allow_origins:
+        - prefix: https://
+      allow_methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      allow_headers:
+        - Content-Type
+        - Authorization

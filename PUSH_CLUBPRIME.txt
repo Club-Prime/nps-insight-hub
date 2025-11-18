@@ -1,0 +1,183 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║   📤 GUIA: PUSH PARA GITHUB DO CLUB PRIME                    ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PASSO 1: CRIAR REPOSITÓRIO NO GITHUB
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Acesse: https://github.com/organizations/Club-Prime/repositories/new
+
+2. Preencha:
+   Repository name: nps-insight-hub
+   Description: Sistema de Pesquisa NPS - GO HEALTH
+   
+   ⚪ Public  (recomendado para deploy gratuito)
+   🔘 Private (se preferir privado)
+   
+   ❌ NÃO marque "Initialize with README"
+   ❌ NÃO adicione .gitignore
+   ❌ NÃO escolha licença ainda
+
+3. Clique: Create repository
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PASSO 2: EXECUTAR SCRIPT AUTOMATIZADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Execute no terminal:
+
+  ./push-to-clubprime.sh
+
+O script vai:
+  ✓ Adicionar todos os arquivos
+  ✓ Fazer commit
+  ✓ Adicionar remote do Club Prime
+  ✓ Fazer push
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PASSO 3: AUTENTICAÇÃO NO GITHUB
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Quando pedir autenticação, você tem 2 opções:
+
+OPÇÃO A: Personal Access Token (Recomendado)
+
+1. Gerar token em: https://github.com/settings/tokens/new
+
+2. Configure:
+   Note: Club Prime NPS Hub
+   Expiration: No expiration (ou 90 days)
+   
+   Marque:
+   ✓ repo (todos)
+   ✓ workflow
+   
+3. Clique: Generate token
+
+4. COPIE O TOKEN (aparece uma vez só!)
+
+5. No terminal, quando pedir senha, COLE O TOKEN
+
+OPÇÃO B: SSH Key (Se já tiver configurado)
+
+Se já usa SSH, o push será automático.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ALTERNATIVA: COMANDOS MANUAIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Se preferir fazer manualmente:
+
+# 1. Adicionar arquivos
+git add .
+
+# 2. Commit
+git commit -m "Projeto NPS Hub GO HEALTH - versão completa"
+
+# 3. Adicionar remote Club Prime
+git remote add clubprime https://github.com/Club-Prime/nps-insight-hub.git
+
+# 4. Push
+git push clubprime main
+
+# Se der erro de históricos divergentes:
+git push clubprime main --force
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  DEPOIS DO PUSH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Verifique se subiu: https://github.com/Club-Prime/nps-insight-hub
+
+✅ Configure GitHub Pages (se quiser):
+   Settings → Pages → Source: main branch → /docs ou root
+
+✅ Adicione descrição e tags no repositório
+
+✅ Configure branch protection (se privado):
+   Settings → Branches → Add rule
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  MANTER 2 REPOSITÓRIOS SINCRONIZADOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Você pode manter ambos sincronizados:
+
+# Ver remotes
+git remote -v
+
+# Push para ambos ao mesmo tempo
+git push origin main
+git push clubprime main
+
+# Ou criar alias para push em todos
+git remote add all https://github.com/Club-Prime/nps-insight-hub.git
+git remote set-url --add --push all https://github.com/Luan-DataSpot/nps-insight-hub.git
+git remote set-url --add --push all https://github.com/Club-Prime/nps-insight-hub.git
+
+# Agora um comando só:
+git push all main
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  DEPLOY NO DIGITAL OCEAN (CLUBE PRIME)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Após push, configure deploy:
+
+1. Digital Ocean App Platform
+   https://cloud.digitalocean.com/apps
+
+2. Create App → GitHub
+
+3. Selecione: Club-Prime/nps-insight-hub
+
+4. As configs já estão em .do/app.yaml
+
+5. Deploy automático após cada push!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ARQUIVOS QUE SERÃO ENVIADOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Código-fonte completo (React + TypeScript)
+✓ Componentes do sistema NPS
+✓ Integração Supabase
+✓ QR Code Generator
+✓ Gráficos avançados (Recharts)
+✓ Exportação Excel/CSV
+✓ Docker configuration
+✓ Deploy configuration (Digital Ocean)
+✓ Documentação completa
+✓ Scripts de deploy
+
+Total: ~100 arquivos, ~1.5MB
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Antes do push:
+[ ] Criar repositório no GitHub Club Prime
+[ ] Gerar Personal Access Token (se necessário)
+
+Durante o push:
+[ ] Executar ./push-to-clubprime.sh
+[ ] Autenticar com token/senha
+[ ] Aguardar upload completo
+
+Após o push:
+[ ] Verificar repositório no GitHub
+[ ] Adicionar descrição e tags
+[ ] Configurar deploy (opcional)
+[ ] Atualizar README (opcional)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║   🚀 PRONTO! EXECUTE: ./push-to-clubprime.sh                 ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝

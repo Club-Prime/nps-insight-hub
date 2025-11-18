@@ -7,8 +7,13 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:analyze": "vite build --mode production && npx vite-bundle-visualizer",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docker:build": "docker build -t go-health-nps:latest .",
+    "docker:run": "docker run -d --name go-health-nps -p 80:80 go-health-nps:latest",
+    "docker:stop": "docker stop go-health-nps && docker rm go-health-nps",
+    "docker:logs": "docker logs -f go-health-nps"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -53,6 +58,7 @@
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.61.1",
+    "react-qr-code": "^2.0.18",
     "react-resizable-panels": "^2.1.9",
     "react-router-dom": "^6.30.1",
     "recharts": "^2.15.4",
@@ -60,6 +66,7 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
+    "xlsx": "^0.18.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {
