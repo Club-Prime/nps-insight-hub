@@ -1,0 +1,45 @@
+name: Keep Supabase Alive
+
+# Executa a cada 4 dias para manter o banco ativo
+on:
+  schedule:
+    - cron: '0 8 */4 * *'  # A cada 4 dias às 8:00 UTC (5:00 AM Brasília)
+  workflow_dispatch:  # Permite executar manualmente
+
+jobs:
+  ping-database:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping Supabase Database
+        run: |
+          echo "🔄 Mantendo Supabase ativo..."
+          
+          # Fazer uma requisição simples para o Supabase
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/questionnaires?limit=1")
+          
+          if [ "$response" -eq 200 ]; then
+            echo "✅ Supabase está ativo! (HTTP $response)"
+          else
+            echo "⚠️ Resposta inesperada: HTTP $response"
+            exit 1
+          fi
+      
+      - name: Log Success
+        if: success()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Keep-Alive executado com sucesso!"
+          echo "📅 Data: $(date -u)"
+          echo "🔄 Próxima execução: Daqui a 4 dias"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "❌ Falha ao manter Supabase ativo!"
+          echo "Por favor, verifique as credenciais e o status do Supabase"
