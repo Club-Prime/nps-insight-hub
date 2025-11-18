@@ -1,73 +1,62 @@
-# Welcome to your Lovable project
+# �� GO HEALTH - Sistema de Pesquisa NPS
 
-## Project info
+Sistema completo de pesquisa Net Promoter Score (NPS) para avaliar a satisfação dos clientes.
 
-**URL**: https://lovable.dev/projects/12da5e9b-3ad6-4199-bcee-8dc4d85214e0
+[![GitHub](https://img.shields.io/badge/GitHub-Club--Prime-blue)](https://github.com/Club-Prime/nps-insight-hub)
+[![React](https://img.shields.io/badge/React-18.3-blue)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)](https://www.typescriptlang.org/)
 
-## How can I edit this code?
+## 🎯 Características
 
-There are several ways of editing your application.
+- ✅ Gerenciamento completo de pesquisas NPS
+- ✅ Gerador de QR Code para cada pesquisa
+- ✅ Dashboards com gráficos interativos (Recharts)
+- ✅ Exportação de dados (Excel/CSV)
+- ✅ Autenticação segura com Supabase
+- ✅ Interface responsiva com TailwindCSS
 
-**Use Lovable**
+## 🚀 Tecnologias
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/12da5e9b-3ad6-4199-bcee-8dc4d85214e0) and start prompting.
+- **Frontend:** React 18 + TypeScript + Vite
+- **Backend:** Supabase (PostgreSQL + Auth)
+- **UI:** TailwindCSS + Shadcn/ui
+- **Charts:** Recharts
+- **Deploy:** Digital Ocean / Docker
 
-Changes made via Lovable will be committed automatically to this repo.
+## 📦 Instalação
 
-**Use your preferred IDE**
+```bash
+# Clone o repositório
+git clone https://github.com/Club-Prime/nps-insight-hub.git
+cd nps-insight-hub
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+# Instale dependências
+npm install
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+# Configure .env.local
+VITE_SUPABASE_URL=sua_url
+VITE_SUPABASE_ANON_KEY=sua_key
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Inicie o servidor
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🚢 Deploy
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Veja guias completos em:
+- [DEPLOY_DIGITAL_OCEAN.md](DEPLOY_DIGITAL_OCEAN.md)
+- [DEPLOY_QUICK.md](DEPLOY_QUICK.md)
 
-**Use GitHub Codespaces**
+## 📚 Documentação
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- [Implementação QR Code](IMPLEMENTACAO_QR_CODE.md)
+- [Build Info](BUILD_INFO.md)
+- [Configuração Supabase](NOVO_SUPABASE.txt)
 
-## What technologies are used for this project?
+## 👥 Autores
 
-This project is built with:
+**Club Prime** - [GitHub](https://github.com/Club-Prime)
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 📝 Licença
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/12da5e9b-3ad6-4199-bcee-8dc4d85214e0) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+MIT License
