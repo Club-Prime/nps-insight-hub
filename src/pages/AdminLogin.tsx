@@ -21,17 +21,52 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('🔐 Tentando fazer login...');
+      console.log('📧 Email:', formData.email);
+      console.log('🌐 Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+      console.log('🔑 ANON_KEY configurada:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro de autenticação:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+        });
+        throw error;
+      }
+
+      console.log('✅ Login bem-sucedido!', {
+        userId: data.user?.id,
+        email: data.user?.email,
+      });
 
       toast.success("Login realizado com sucesso!");
       navigate("/admin");
     } catch (error: any) {
-      toast.error(error.message || "Erro ao fazer login");
+      console.error('❌ Erro completo:', error);
+      
+      let errorMessage = "Erro ao fazer login";
+      
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (error.status === 400) {
+        errorMessage = "Email ou senha inválidos";
+      } else if (error.status === 401) {
+        errorMessage = "Credenciais inválidas. Verifique seu email e senha.";
+      } else if (!import.meta.env.VITE_SUPABASE_URL) {
+        errorMessage = "⚠️ ERRO DE CONFIGURAÇÃO: VITE_SUPABASE_URL não configurada!";
+      } else if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        errorMessage = "⚠️ ERRO DE CONFIGURAÇÃO: VITE_SUPABASE_ANON_KEY não configurada!";
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

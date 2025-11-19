@@ -1,11 +1,19 @@
-# 🚀 Deploy na Digital Ocean - NPS Hub Go Health
+# 🚀 Deploy na Digital Ocean - Guia Completo
+
+Este guia mostra como fazer o deploy do **NPS Insight Hub** na Digital Ocean usando **App Platform**.
+
+**🌐 Domínio:** `gohealth-survey.site`
+
+---
 
 ## 📋 Pré-requisitos
 
-- [ ] Conta na Digital Ocean
-- [ ] Código commitado no GitHub ✅
-- [ ] Supabase configurado e rodando ✅
-- [ ] Variáveis de ambiente prontas ✅
+Antes de começar, você precisa ter:
+
+1. ✅ **Conta na Digital Ocean** ([criar conta](https://www.digitalocean.com/))
+2. ✅ **Repositório GitHub** com o código (já temos!)
+3. ✅ **Supabase configurado** com as credenciais
+4. ✅ **Domínio próprio:** `gohealth-survey.site` ✅
 
 ---
 
@@ -62,10 +70,88 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 ---
 
+## 🌐 Configuração do Domínio `gohealth-survey.site`
+
+### Passo 1: Configurar DNS
+
+**No seu provedor de domínio (onde você registrou gohealth-survey.site):**
+
+#### Opção A: Usar CNAME (Mais simples)
+
+```
+Tipo: CNAME
+Nome: @
+Valor: [aguardar URL da Digital Ocean]
+TTL: 3600
+```
+
+#### Opção B: Usar Nameservers da Digital Ocean (Mais controle)
+
+Configure os nameservers:
+
+```
+ns1.digitalocean.com
+ns2.digitalocean.com
+ns3.digitalocean.com
+```
+
+### Passo 2: Adicionar Domínio no App Platform
+
+1. **No Digital Ocean App Platform:**
+   - Após o deploy, vá em **Settings** → **Domains**
+   - Clique em **"Add Domain"**
+   - Digite: `gohealth-survey.site`
+   - Clique em **"Add Domain"**
+
+2. **Configure subdomínio www (opcional):**
+   - Adicione também: `www.gohealth-survey.site`
+   - Marque **"Redirect www to non-www"**
+
+3. **SSL Automático:**
+   - A Digital Ocean configura SSL (Let's Encrypt) automaticamente
+   - Aguarde 5-10 minutos para propagação
+
+### Passo 3: URLs Finais
+
+Após configuração, suas URLs serão:
+
+```
+🌐 Survey Pública:
+https://gohealth-survey.site/survey/satisfacao-clinica-carlos-portela
+
+🔐 Admin:
+https://gohealth-survey.site/admin/login
+
+📊 Dashboard:
+https://gohealth-survey.site/admin
+
+🎯 QR Code:
+Gerar no admin após login
+```
+
+### (Opcional) Subdomínio para Admin
+
+Se quiser separar admin e survey:
+
+```
+admin.gohealth-survey.site → Painel administrativo
+gohealth-survey.site → Survey pública
+```
+
+Configure mais um CNAME:
+
+```
+Tipo: CNAME
+Nome: admin
+Valor: [mesma URL da Digital Ocean]
+```
+
+---
+
 ## 🔗 Links Importantes
 
-- **Survey:** `https://seu-app.ondigitalocean.app/survey/satisfacao-clinica-carlos-portela`
-- **Admin:** `https://seu-app.ondigitalocean.app/admin/login`
+- **Survey:** `https://gohealth-survey.site/survey/satisfacao-clinica-carlos-portela`
+- **Admin:** `https://gohealth-survey.site/admin/login`
 - **Dashboard DO:** https://cloud.digitalocean.com/apps
 
 ---
@@ -80,8 +166,57 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 ## ✅ Checklist Pós-Deploy
 
-- [ ] Testar survey pública
-- [ ] Fazer login no admin
-- [ ] Gerar QR Code
-- [ ] Compartilhar com clínica
-- [ ] Monitorar primeiras respostas
+- [ ] Deploy concluído com sucesso
+- [ ] Domínio `gohealth-survey.site` configurado
+- [ ] SSL funcionando (https://)
+- [ ] Testar survey pública em `https://gohealth-survey.site/survey/satisfacao-clinica-carlos-portela`
+- [ ] Fazer login no admin em `https://gohealth-survey.site/admin/login`
+  - **Email:** `admin@gohealth.com`
+  - **Senha:** `Admin123!`
+- [ ] Gerar QR Code da pesquisa
+- [ ] Imprimir QR Code para clínica
+- [ ] Testar uma resposta completa
+- [ ] Verificar resposta no dashboard
+- [ ] Compartilhar link com Clínica Carlos Portela
+- [ ] Configurar backup automático (opcional)
+- [ ] Configurar monitoramento (opcional)
+
+---
+
+## 🎯 Próximos Passos
+
+1. **Imprimir QR Code:**
+   - Acesse o admin
+   - Visualize a pesquisa
+   - Clique no QR Code
+   - Baixe a imagem
+   - Imprima em alta qualidade
+
+2. **Orientar a Clínica:**
+   - Coloque o QR Code na recepção
+   - Treine a equipe
+   - Monitore as primeiras respostas
+
+3. **Análise de Dados:**
+   - Acesse o dashboard regularmente
+   - Exporte relatórios CSV
+   - Tome ações baseadas no feedback
+
+---
+
+## 🆘 Suporte
+
+**Problemas comuns:**
+
+- **Build falhou:** Verifique as variáveis de ambiente
+- **Domínio não carrega:** Aguarde propagação DNS (até 24h)
+- **SSL não ativa:** Aguarde 10 minutos após adicionar domínio
+- **Survey não carrega:** Verifique URL do Supabase
+
+**Precisa de ajuda?**
+- Digital Ocean Docs: https://docs.digitalocean.com/products/app-platform/
+- Supabase Docs: https://supabase.com/docs
+
+---
+
+🎉 **Parabéns! Seu sistema NPS está no ar!** 🎉
