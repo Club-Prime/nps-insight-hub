@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -57,6 +58,7 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [slug, setSlug] = useState("");
+  const [requireIdentification, setRequireIdentification] = useState(true);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const [questions, setQuestions] = useState<Question[]>([
     {
@@ -73,6 +75,7 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
       setTitle(questionnaire.title || "");
       setDescription(questionnaire.description || "");
       setSlug(questionnaire.slug || "");
+      setRequireIdentification(questionnaire.require_identification ?? true);
       
       // Transformar options do formato do banco (array) para o formato do editor (objeto com choices)
       const transformedQuestions = (questionnaire.questions || []).map((q: any) => ({
@@ -99,6 +102,7 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
       setTitle("");
       setDescription("");
       setSlug("");
+      setRequireIdentification(true);
       setQuestions([
         {
           question_text: "Em uma escala de 0 a 10, qual a probabilidade de você recomendar nossos produtos/serviços?",
@@ -220,6 +224,7 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
             title,
             description,
             slug,
+            require_identification: requireIdentification,
             updated_at: new Date().toISOString(),
           })
           .eq("id", questionnaire.id);
@@ -234,6 +239,7 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
             title,
             description,
             slug,
+            require_identification: requireIdentification,
             is_active: true,
           })
           .select()
@@ -325,6 +331,22 @@ export const QuestionnaireEditor = ({ open, onOpenChange, questionnaire, onSucce
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Descreva o objetivo desta pesquisa"
                   rows={3}
+                />
+              </div>
+
+              <div className="flex items-center justify-between space-x-2 p-4 border rounded-lg bg-muted/50">
+                <div className="space-y-0.5">
+                  <Label htmlFor="require-identification" className="text-base font-semibold">
+                    Exigir Identificação
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Se desativado, usuários podem responder anonimamente (sem CPF e nome)
+                  </p>
+                </div>
+                <Switch
+                  id="require-identification"
+                  checked={requireIdentification}
+                  onCheckedChange={setRequireIdentification}
                 />
               </div>
             </div>

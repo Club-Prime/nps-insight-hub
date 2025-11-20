@@ -111,16 +111,21 @@ export default function Survey() {
   };
 
   const validateForm = () => {
-    if (!formData.cpf || !formData.fullName) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
-      return false;
-    }
+    const requireIdentification = questionnaire?.require_identification ?? true;
+    
+    // Validar identificação apenas se for obrigatória
+    if (requireIdentification) {
+      if (!formData.cpf || !formData.fullName) {
+        toast.error("Por favor, preencha todos os campos obrigatórios");
+        return false;
+      }
 
-    // Validar CPF
-    if (!validateCPF(formData.cpf)) {
-      toast.error("Por favor, insira um CPF válido");
-      setCpfError("CPF inválido");
-      return false;
+      // Validar CPF
+      if (!validateCPF(formData.cpf)) {
+        toast.error("Por favor, insira um CPF válido");
+        setCpfError("CPF inválido");
+        return false;
+      }
     }
 
     if (npsScore === null) {
@@ -147,12 +152,14 @@ export default function Survey() {
     setLoading(true);
 
     try {
+      const requireIdentification = questionnaire?.require_identification ?? true;
+      
       const { data: responseData, error: responseError } = await supabase
         .from("survey_responses")
         .insert({
           questionnaire_id: questionnaire.id,
-          cpf: formData.cpf.replace(/\D/g, ""),
-          full_name: formData.fullName,
+          cpf: requireIdentification ? formData.cpf.replace(/\D/g, "") : null,
+          full_name: requireIdentification ? formData.fullName : null,
           email: formData.email || null,
           phone: formData.phone || null,
           nps_score: npsScore,
@@ -240,63 +247,118 @@ export default function Survey() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Identification Section */}
-          <div className="bg-card p-8 rounded-lg border border-border space-y-6">
-            <h2 className="text-2xl font-bold mb-6">Identificação</h2>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="cpf">CPF *</Label>
-                <Input
-                  id="cpf"
-                  value={formData.cpf}
-                  onChange={handleCPFChange}
-                  placeholder="000.000.000-00"
-                  maxLength={14}
-                  required
-                  className={cpfError ? "border-destructive" : ""}
-                />
-                {cpfError && (
-                  <p className="text-xs text-destructive flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {cpfError}
-                  </p>
-                )}
-              </div>
+          {/* Identification Section - Two versions based on requirement */}
+          {questionnaire?.require_identification === false ? (
+            // MODO ANÔNIMO: Todos os campos opcionais (sem required)
+            <div className="bg-card p-8 rounded-lg border border-border space-y-6">
+              <h2 className="text-2xl font-bold mb-6">Identificação (Opcional)</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Todos os campos são opcionais. Sua privacidade é respeitada.
+              </p>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="cpf">CPF</Label>
+                  <Input
+                    id="cpf"
+                    value={formData.cpf}
+                    onChange={handleCPFChange}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Nome Completo *</Label>
-                <Input
-                  id="fullName"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  placeholder="Seu nome"
-                  required
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Nome Completo</Label>
+                  <Input
+                    id="fullName"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    placeholder="Seu nome"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="seu@email.com"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="seu@email.com"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="(00) 00000-0000"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefone</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            // MODO IDENTIFICADO: CPF + Nome obrigatórios (com required)
+            <div className="bg-card p-8 rounded-lg border border-border space-y-6">
+              <h2 className="text-2xl font-bold mb-6">Identificação</h2>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="cpf">CPF *</Label>
+                  <Input
+                    id="cpf"
+                    value={formData.cpf}
+                    onChange={handleCPFChange}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    required
+                    className={cpfError ? "border-destructive" : ""}
+                  />
+                  {cpfError && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {cpfError}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Nome Completo *</Label>
+                  <Input
+                    id="fullName"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    placeholder="Seu nome"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="seu@email.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefone</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* NPS Question */}
           <div className="bg-card p-8 rounded-lg border border-border space-y-6">

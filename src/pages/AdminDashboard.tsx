@@ -25,6 +25,7 @@ import { NPSDistributionChart } from "@/components/admin/NPSDistributionChart";
 import { NPSTimelineChart } from "@/components/admin/NPSTimelineChart";
 import { QuestionnaireEditor } from "@/components/admin/QuestionnaireEditor";
 import { QuestionnaireDetailView } from "@/components/admin/QuestionnaireDetailView";
+import ResponseDetailsModal from "@/components/admin/ResponseDetailsModal";
 import { exportToExcel, exportToCSV } from "@/utils/exportData";
 import {
   DropdownMenu,
@@ -53,6 +54,8 @@ export default function AdminDashboard() {
   const [editingQuestionnaire, setEditingQuestionnaire] = useState<any>(null);
   const [deleteDialog, setDeleteDialog] = useState<any>(null);
   const [viewMode, setViewMode] = useState<"overview" | "detail">("overview");
+  const [selectedResponse, setSelectedResponse] = useState<any>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [npsData, setNpsData] = useState({
     score: 0,
     promoters: 0,
@@ -448,7 +451,33 @@ export default function AdminDashboard() {
               {responses.map((response) => {
                 const questionnaire = questionnaires.find((q) => q.id === response.questionnaire_id);
                 return (
-                  <Card key={response.id}>
+                  <Card 
+                    key={response.id} 
+                    className="cursor-pointer hover:bg-accent/50 transition-colors"
+                    onClick={async () => {
+                      // Buscar dados completos da resposta com relacionamentos
+                      const { data, error } = await supabase
+                        .from("survey_responses")
+                        .select(`
+                          *,
+                          questionnaire:questionnaires(title),
+                          survey_answers:answers(
+                            answer_value,
+                            question:questions(question_text, question_type)
+                          )
+                        `)
+                        .eq("id", response.id)
+                        .single();
+
+                      if (error) {
+                        toast.error("Erro ao carregar detalhes");
+                        return;
+                      }
+
+                      setSelectedResponse(data);
+                      setDetailsModalOpen(true);
+                    }}
+                  >
                     <CardContent className="pt-6">
                       <div className="grid md:grid-cols-3 gap-4">
                         <div>
@@ -461,7 +490,7 @@ export default function AdminDashboard() {
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">Nome</p>
-                          <p className="font-medium">{response.full_name}</p>
+                          <p className="font-medium">{response.full_name || "Anônimo"}</p>
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">Produto</p>
@@ -527,6 +556,16 @@ export default function AdminDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Response Details Modal */}
+      <ResponseDetailsModal
+        response={selectedResponse}
+        isOpen={detailsModalOpen}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          setSelectedResponse(null);
+        }}
+      />
     </div>
   );
 }

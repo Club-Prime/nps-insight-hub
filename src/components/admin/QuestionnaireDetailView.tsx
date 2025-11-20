@@ -7,6 +7,7 @@ import { TrendingUp, Users, FileText, QrCode as QrCodeIcon, Download, ArrowLeft 
 import { NPSDistributionChart } from "./NPSDistributionChart";
 import { NPSTimelineChart } from "./NPSTimelineChart";
 import { QRCodeGenerator } from "./QRCodeGenerator";
+import ResponseDetailsModal from "./ResponseDetailsModal";
 import { exportToExcel, exportToCSV } from "@/utils/exportData";
 import { toast } from "sonner";
 import {
@@ -25,6 +26,8 @@ export const QuestionnaireDetailView = ({ questionnaireId, onBack }: Questionnai
   const [questionnaire, setQuestionnaire] = useState<any>(null);
   const [responses, setResponses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedResponse, setSelectedResponse] = useState<any>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [npsData, setNpsData] = useState({
     score: 0,
     promoters: 0,
@@ -246,7 +249,33 @@ export const QuestionnaireDetailView = ({ questionnaireId, onBack }: Questionnai
               </div>
             ) : (
               responses.slice(0, 10).map((response) => (
-                <Card key={response.id}>
+                <Card 
+                  key={response.id}
+                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={async () => {
+                    // Buscar dados completos da resposta com relacionamentos
+                    const { data, error } = await supabase
+                      .from("survey_responses")
+                      .select(`
+                        *,
+                        questionnaire:questionnaires(title),
+                        survey_answers:answers(
+                          answer_value,
+                          question:questions(question_text, question_type)
+                        )
+                      `)
+                      .eq("id", response.id)
+                      .single();
+
+                    if (error) {
+                      toast.error("Erro ao carregar detalhes");
+                      return;
+                    }
+
+                    setSelectedResponse(data);
+                    setDetailsModalOpen(true);
+                  }}
+                >
                   <CardContent className="pt-6">
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
@@ -255,7 +284,7 @@ export const QuestionnaireDetailView = ({ questionnaireId, onBack }: Questionnai
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Nome</p>
-                        <p className="font-medium">{response.full_name}</p>
+                        <p className="font-medium">{response.full_name || "Anônimo"}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Produto</p>
@@ -287,6 +316,16 @@ export const QuestionnaireDetailView = ({ questionnaireId, onBack }: Questionnai
           </div>
         </CardContent>
       </Card>
+
+      {/* Response Details Modal */}
+      <ResponseDetailsModal
+        response={selectedResponse}
+        isOpen={detailsModalOpen}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          setSelectedResponse(null);
+        }}
+      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ClipboardCheck, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import logoBlack from "@/assets/logo-black.png";
 
 const Index = () => {
@@ -17,23 +17,8 @@ const Index = () => {
           </h1>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="pt-6 text-center space-y-4">
-              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto">
-                <ClipboardCheck className="w-8 h-8 text-primary-foreground" />
-              </div>
-              <h2 className="text-2xl font-bold">Pesquisa</h2>
-              <p className="text-muted-foreground">
-                Interface intuitiva para coleta de feedback dos clientes
-              </p>
-              <Button onClick={() => navigate("/survey")} className="w-full">
-                Responder Pesquisa
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
+        <div className="flex justify-center max-w-md mx-auto">
+          <Card className="hover:shadow-lg transition-shadow w-full">
             <CardContent className="pt-6 text-center space-y-4">
               <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto">
                 <Settings className="w-8 h-8 text-accent-foreground" />
